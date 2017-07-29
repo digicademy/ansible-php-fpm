@@ -1,0 +1,19 @@
+; general settings
+{% for item in php_cli_ini_settings_general %}
+{{ item }}
+{% endfor %}
+
+; performance tuning
+{% for item in php_cli_ini_settings_tuning %}
+{{ item }}
+{% endfor %}
+
+; production settings
+{% for item in php_cli_ini_settings_production %}
+{{ item }}
+{% endfor %}
+
+; development settings - will override settings from above
+{% for item in php_cli_ini_settings_development %}
+{{ item }}
+{% endfor %}

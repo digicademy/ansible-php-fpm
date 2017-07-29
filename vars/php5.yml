@@ -1,0 +1,3 @@
+---
+php_configuration_path: "/etc/php5/"
+php_mod_path: "/etc/php5/mods-available/"

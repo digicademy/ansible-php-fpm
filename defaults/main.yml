@@ -1,0 +1,115 @@
+---
+php_version: "5"
+# OR php_version: "7.0" (for Debian Jessie)
+
+php_additional_packages:
+  - "php{{ php_version }}-curl"
+  - "php{{ php_version }}-geoip"
+  - "php{{ php_version }}-gd"
+  - "php{{ php_version }}-intl"
+  - "php{{ php_version }}-memcached"
+  - "php{{ php_version }}-mcrypt"
+  - "php{{ php_version }}-mysql"
+  - "php{{ php_version }}-pgsql"
+  - "php{{ php_version }}-xsl"
+
+php7_additional_packages:
+  - "php{{ php_version }}-mbstring"
+  - "php{{ php_version }}-sqlite3"
+  - "php{{ php_version }}-zip"
+  - "php{{ php_version }}-soap"
+
+php_fpm_global_settings:
+  pid: "/var/run/php{{ php_version }}-fpm.pid"
+  error_log: "/var/log/php{{ php_version }}-fpm.log"
+  emergency_restart_threshold: 10
+  emergency_restart_interval: "1m"
+
+php_fpm_pool_settings:
+  - pool_name: "www"
+    user: "www-data"
+    group: "www-data"
+    listen: "/var/run/php{{ php_version }}-fpm.sock"
+    listen_owner: "www-data"
+    listen_group: "www-data"
+    listen_mode: "0660"
+    listen_allowed_clients: "127.0.0.1"
+    pm_max_children: 34
+    pm_start_servers: 3
+    pm_min_spare_servers: 2
+    pm_max_spare_servers: 4
+    pm_max_requests: 1000
+    slowlog: "/var/log/$pool.log.slow"
+    request_slowlog_timeout: "5s"
+
+php_fpm_ini_settings_general:
+  - "date.timezone = Europe/Berlin"
+
+php_fpm_ini_settings_tuning:
+  - "opcache.enable = 1"
+  - "opcache.memory_consumption = 64"
+  - "opcache.interned_strings_buffer = 16"
+  - "opcache.max_accelerated_files = 4000"
+  - "opcache.validate_timestamps = 1"
+  - "opcache.revalidate_freq = 0"
+  - "opcache.fast_shutdown = 1"
+  - "opcache.load_comments = 1"
+  - "session.save_handler = \"memcached\""
+  - "session.save_path = \"127.0.0.1:11211\""
+  - "output_buffering = 4096"
+  - "implicit_flush = false"
+  - "realpath_cache_size = 64k"
+
+php_fpm_ini_settings_production:
+  - "expose_php = Off"
+  - "display_errors = Off"
+  - "display_startup_errors = Off"
+  - "error_reporting = E_ALL & ~E_DEPRECATED & ~E_STRICT"
+  - "html_errors = On"
+  - "log_errors = On"
+  - "track_errors = Off"
+  - "max_input_time = 60"
+  - "output_buffering = 4096"
+  - "register_argc_argv = Off"
+  - "request_order = \"GP\""
+  - "session.bug_compat_42 = Off"
+  - "session.bug_compat_warn = Off"
+  - "session.gc_divisor = 1000"
+  - "session.hash_bits_per_character = 5"
+  - "short_open_tag = Off"
+  - "url_rewriter.tags = \"a=href,area=href,frame=src,input=src,form=fakeentry\""
+  - "variables_order = \"GPCS\""
+  - "auto_globals_jit = Off"
+  - "report_memleaks = Off"
+  - "memory_limit = 512M"
+  - "max_execution_time = 30"
+  - "upload_max_filesize = 2M"
+  - "post_max_size = 2M"
+  - "allow_url_fopen = Off"
+  - "max_input_nesting_level = 1000"
+  - "always_populate_raw_post_data = -1"
+
+php_fpm_ini_settings_development: []
+#  - "expose_php = On"
+#  - "display_errors = On"
+#  - "display_startup_errors = On"
+#  - "error_reporting = E_ALL"
+#  - "html_errors = On"
+#  - "log_errors = On"
+#  - "track_errors = On"
+#  - "memory_limit = 512M"
+#  - "max_execution_time = 360"
+#  - "upload_max_filesize = 10M"
+#  - "post_max_size = 10M"
+#  - "allow_url_fopen = Off"
+#  - "max_input_nesting_level = 1000"
+
+php_cli_ini_settings_general:
+  - "date.timezone = Europe/Berlin"
+
+php_cli_ini_settings_tuning:
+  - "opcache.enable = 1"
+
+php_cli_ini_settings_production: []
+
+php_cli_ini_settings_development: []

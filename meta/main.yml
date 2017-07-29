@@ -1,0 +1,17 @@
+---
+galaxy_info:
+  author: "Torsten Schrade"
+  description: "Installs PHP-FPM 5.6 (on Wheezy using dotdeb, on Jessie using standard packages) or 7.0 (Jessie only, using dotdeb)"
+  company: "Digital Academy – Academy of Sciences and Literature | Mainz"
+  license: "MIT"
+  min_ansible_version: 2.0
+  platforms:
+    - name: Debian
+      versions:
+        - wheezy
+        - jessie
+  galaxy_tags:
+    - web
+    - php
+
+dependencies: []

@@ -1,0 +1,102 @@
+---
+- name: Add dotdeb repository to /etc/apt/sources.list.d/
+  template:
+    src: dotdeb.list.j2
+    dest: /etc/apt/sources.list.d/dotdeb.list
+    owner: root
+    group: root
+    mode: u+rw,go+r
+  when: (ansible_distribution_major_version == '7' and php_version == '5') or (ansible_distribution_major_version == '8' and php_version == '7.0')
+
+- name: Add dotdeb repository key to apt
+  apt_key: url=https://www.dotdeb.org/dotdeb.gpg state=present
+  when: (ansible_distribution_major_version == '7' and php_version == '5') or (ansible_distribution_major_version == '8' and php_version == '7.0')
+
+- name: Update apt
+  apt: update_cache=yes force=yes
+  when: (ansible_distribution_major_version == '7' and php_version == '5') or (ansible_distribution_major_version == '8' and php_version == '7.0')
+
+# install php-fpm first (avoids automatically getting apache2 on Debian hosts)
+# @see: http://wildlyinaccurate.com/installing-php-on-debian-without-apache/
+
+- name: Install php{{ php_version }}-fpm package
+  apt: pkg=php{{ php_version }}-fpm state=present force=yes
+
+- name: Install php{{ php_version }} main package
+  apt: pkg=php{{ php_version }} state=present force=yes
+
+- name: Install additional PHP packages
+  apt: pkg={{ item }} state=present force=yes
+  with_items: "{{ php_additional_packages }}"
+  when: php_additional_packages is defined
+
+- name: Install PHP 7 specific packages
+  apt: pkg={{ item }} state=present force=yes
+  with_items: "{{ php7_additional_packages }}"
+  when: php_version == '7.0'
+
+- name: Install memcached package
+  apt: pkg=memcached state=present force=yes
+
+# install libpcre3 from Jessie backports if PHP 7 (apt-get -t jessie-backports install libpcre3)
+# @see: https://github.com/oerdnj/deb.sury.org/issues/353
+
+#- name: Install newest libpcre3 from backports for PHP 7
+#  apt: pkg=libpcre3 state=present force=yes default_release=jessie-backports
+#  when: ansible_distribution_major_version == '8' and php_version == '7.0'
+
+- name: Install newest libpcre3 from backports for PHP 7
+  shell: "apt-get -yt jessie-backports install libpcre3 warn=no"
+  when: ansible_distribution_major_version == '8' and php_version == '7.0'
+
+# configure php-fpm
+
+- include_vars: vars/php{{ php_version }}.yml
+
+#- name: Copy php7.0-fpm systemd unit file into place (on Debian 8)
+#  template:
+#    src: php7.0-fpm.unit.j2
+#    dest: "/etc/systemd/system/php7.0-fpm.service"
+#    owner: root
+#    group: root
+#    mode: 0755
+#  when: (ansible_distribution == 'Debian' and php_version == '7.0')
+
+- name: Set global configuration options in {{ php_configuration_path }}/fpm/php-fpm.conf
+  template:
+    src: php-fpm.conf.j2
+    dest: "{{ php_configuration_path }}/fpm/php-fpm.conf"
+    owner: root
+    group: root
+    mode: u+rw,go+r
+  notify: restart php{{ php_version }}-fpm
+
+- name: Add pool configurations in {{ php_configuration_path }}fpm/pool.d/
+  template:
+    src: pool.conf.j2
+    dest: "{{ php_configuration_path }}/fpm/pool.d/{{ item.pool_name }}.conf"
+    owner: root
+    group: root
+    mode: u+rw,go+r
+  with_items: "{{ php_fpm_pool_settings }}"
+  notify: restart php{{ php_version }}-fpm
+
+- name: Add custom php.ini configuration in {{ php_configuration_path }}/fpm/conf.d/99-php-fpm.ini
+  template:
+    src: 99-php-fpm.ini.j2
+    dest: "{{ php_configuration_path }}/fpm/conf.d/99-php-fpm.ini"
+    owner: root
+    group: root
+    mode: u+rw,go+r
+  notify: restart php{{ php_version }}-fpm
+
+# configure php-cli
+
+- name: Add custom php.ini configuration in {{ php_configuration_path }}/cli/conf.d/99-php-cli.ini
+  template:
+    src: 99-php-cli.ini.j2
+    dest: "{{ php_configuration_path }}/cli/conf.d/99-php-cli.ini"
+    owner: root
+    group: root
+    mode: u+rw,go+r
+  notify: restart php{{ php_version }}-fpm
